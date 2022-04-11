@@ -93,6 +93,28 @@ collector_files:
   - "*.collector.yml"
 ```
 
+### Environment Variable Subsitution
+
+To enable sharing your `sql_exporter.yml` across a variety of environments,
+such as local development and production, the configuration file is parsed
+using golang templates to enable environment variable subsitution.
+
+For example, the following enables configuring username/password at runtime:
+
+**`./sql_exporter.yml`**
+
+```yaml
+# The target to monitor and the list of collectors to execute on it.
+target:
+  # Data source name always has a URI schema that matches the driver name. In some cases (e.g. MySQL)
+  # the schema gets dropped or replaced to match the driver expected DSN format.
+  data_source_name: 'sqlserver://${PROM_USER}:${PROM_PASSWORD}@dbserver1.example.com:1433'
+
+  # Collectors (referenced by name) to execute on the target.
+  collectors: [pricing_data_freshness]
+
+```
+
 ### Collectors
 
 Collectors may be defined inline, in the exporter configuration file, under `collectors`, or they may be defined in
