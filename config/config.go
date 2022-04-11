@@ -1,10 +1,13 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 	"time"
 
 	log "github.com/golang/glog"
@@ -16,13 +19,24 @@ import (
 // Load attempts to parse the given config file and return a Config object.
 func Load(configFile string) (*Config, error) {
 	log.Infof("Loading configuration from %s", configFile)
-	buf, err := ioutil.ReadFile(configFile)
+	template, err := template.ParseFiles(configFile)
 	if err != nil {
 		return nil, err
 	}
 
+	env := make(map[string]string)
+	for _, envVar := range os.Environ() {
+		keyValue := strings.SplitN(envVar, "=", 2)
+		env[keyValue[0]] = keyValue[1]
+	}
+
+	var generatedConfig bytes.Buffer
+	if err = template.Execute(&generatedConfig, env); err != nil {
+		return nil, err
+	}
+
 	c := Config{configFile: configFile}
-	err = yaml.Unmarshal(buf, &c)
+	err = yaml.Unmarshal(generatedConfig.Bytes(), &c)
 	if err != nil {
 		return nil, err
 	}
